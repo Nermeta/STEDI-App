@@ -1,36 +1,36 @@
-
-import React, { useEffect,useState } from 'react';
-import { StyleSheet, Text, View, Image, SafeAreaView , Share, ScrollView, Button} from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { StyleSheet, Text, View, Image, SafeAreaView , Share, ScrollView, Button, TouchableOpacity} from 'react-native';
 import { Card, CardTitle, CardContent} from 'react-native-material-cards';
 import BarChart from 'react-native-bar-chart';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Camera } from 'expo-camera';
+import {Camera} from 'expo-camera';
 // import Share from 'react-native-share';
 
 const cameraOptions={
   quality:0,
-exif:false}
+  exif:false
+}
+
 
 
 const Profile = (props) => {
-  const [userName,setUserName] = useState("");
-  // const [permission, requestPermission] = Camera.useCameraPermissions();
-  const [cameraPermission, setCameraPermission] = useState(false);
+  const [userName,setUserName] = useState("")
+  const [cameraPermission, setCameraPermission] = useState(false)
   const [profilePhoto, setProfilePhoto] = useState(null);
   const cameraRef = useRef(null);
   const [cameraReady, setCameraReady] = useState(false);
-useEffect(()=>{
-  const getUserName = async ()=>{
-    const cameraPermission = await Camera.requerstCameraPermissionAsync();
-    console.log('Camera permission', cameraPermission);
-    setCameraPermission(cameraPermission);
-    const userName = await AsyncStorage.getItem('userName');
-    setUserName(userName);
-    const profilePhoto = await AsyncStorage.getItem('profilePhoto')
-    setProfilePhoto(profilePhoto);
-  };
-  getUserName();
-},[]);
+
+  useEffect(()=>{
+    const getUserName = async ()=>{
+      const cameraPermission = await Camera.requestCameraPermissionsAsync();
+      setCameraPermission(cameraPermission);
+      const userName = await AsyncStorage.getItem('userName');
+      setUserName(userName);
+      await AsyncStorage.removeItem('profilePhoto')
+      setProfilePhoto(profilePhoto);
+    };
+    getUserName();
+  },[]);
 
   const myCustomerShare = async() =>{
     const shareOptions = {
@@ -44,29 +44,26 @@ useEffect(()=>{
   console.log('Error', error)
       }
     }
-  if (!cameraPermission) {
-    return <View/>;
-  }
-if (profilePhoto==null){
-  return (
-    <View style={styles.container}>
-      <Camera style={styles.camera} ref={cameraRef} onCameraReady={()=>{setCameraReady(true)}}>
-        <View style={styles.buttonContainer}>
-          {cameraReady?<TouchableOpacity style={styles.button} onPress={async()=> {
+    if(profilePhoto==null){
+      return (
+        <View style={styles.container}>
+          <Camera style={styles.camera} ref={cameraRef} onCameraReady={()=>setCameraReady(true)}>
+            <View style={styles.buttonContainer}>
+              {cameraReady?<TouchableOpacity style = {styles.button} onPress={async ()=> {
 
-            const picture = await cameraRef.current.takePictureAsync(cameraOptions)
-            console.log('Picture', picture);
-            await AsyncStorage.setItem('profilePhoto',picture.uri);
-            setProfilePhoto(picture.uri);
-          }}>
-            <Text style={styles.text}>take Picture</Text>
-          </TouchableOpacity>:null}
+                const picture = await cameraRef.current.takePictureAsync(cameraOptions);
+                console.log('Picture',picture);
+                await AsyncStorage.setItem('ProfilePhoto', picture.uri)
+                setProfilePhoto(picture.uri);
+                }}>
+                <Text style={styles.text}>Take picture</Text>
+              </TouchableOpacity>: null}
+            </View>
+          </Camera>
         </View>
-      </Camera>
-    </View>
-  );
-}
-else {
+      );
+    }
+  else{
   return (
     <SafeAreaView style={{flex: 1}}>
          <Card style={{backgroundColor:'white', borderRadius: 10, margin:20 ,width: 320, shadowColor: "#000",
@@ -80,7 +77,7 @@ shadowRadius: 2.62,
 elevation: 4}}>
      <CardContent>
      <Image style={{height: 100, width:100, borderRadius: 75}}
-      source={require('../image/me.jpg')} />
+      source={{uri:profilePhoto}} />
     <Text style={{marginTop:10,marginBottom:10,fontWeight: 'bold'}}>{userName}</Text>
 
     <Text style={{marginTop:20,marginBottom:2}}>This Week's progress</Text>
@@ -95,10 +92,10 @@ elevation: 4}}>
 }};
 export default Profile;
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container:{
+    flex:1,
     justifyContent: 'center',
-    padding: 20
+    padding:20
   },
   camera: {
     flex: 1,
@@ -119,4 +116,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
   },
+
 });
